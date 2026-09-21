@@ -8,7 +8,7 @@ const navigation = [
   { label: "Dashboard", icon: "home", href: "/", available: true },
   { label: "Log session", icon: "plus", href: "/sessions/new", available: true },
   { label: "Students", icon: "people", available: false },
-  { label: "Monthly reports", icon: "report", available: false },
+  { label: "Monthly reports", icon: "report", href: "/reports", available: true },
 ] as const;
 
 function NavIcon({ name }: { name: (typeof navigation)[number]["icon"] }) {
