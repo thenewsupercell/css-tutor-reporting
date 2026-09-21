@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 
+import { DataLoadError, DataLoading } from "@/components/data-state";
 import { useDemoData } from "@/components/demo-data-provider";
 import { DEMO_TUTOR_ID } from "@/lib/seed-data";
 
@@ -49,7 +50,7 @@ function formatDuration(minutes: number) {
 }
 
 export function SessionForm() {
-  const { data, addSession } = useDemoData();
+  const { data, status, loadError, retryLoad, addSession } = useDemoData();
   const today = localDateKey();
   const [studentId, setStudentId] = useState("");
   const [date, setDate] = useState(today);
@@ -57,7 +58,18 @@ export function SessionForm() {
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [savedSession, setSavedSession] = useState<SavedSession | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const submitErrorRef = useRef<HTMLDivElement>(null);
+
+  if (status === "loading") {
+    return <DataLoading label="Loading tutor assignments…" />;
+  }
+
+  if (status === "error") {
+    return <DataLoadError message={loadError ?? "Could not connect to Supabase."} onRetry={retryLoad} />;
+  }
 
   const tutor = data.tutors.find((item) => item.id === DEMO_TUTOR_ID);
   const eligibleAssignments = data.assignments.filter(
@@ -76,7 +88,7 @@ export function SessionForm() {
     .filter((student) => student !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors: FormErrors = {};
@@ -111,20 +123,34 @@ export function SessionForm() {
     }
 
     const student = data.students.find((item) => item.id === studentId);
-    addSession({
-      id: crypto.randomUUID(),
-      assignmentId: assignment.id,
-      date,
-      durationMinutes,
-      notes: notes.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    });
-    setErrors({});
-    setSavedSession({
-      studentName: student?.name ?? "Student",
-      date,
-      durationMinutes,
-    });
+    setSubmitError("");
+    setIsSaving(true);
+
+    try {
+      await addSession({
+        id: crypto.randomUUID(),
+        assignmentId: assignment.id,
+        date,
+        durationMinutes,
+        notes: notes.trim() || undefined,
+        createdAt: new Date().toISOString(),
+      });
+      setErrors({});
+      setSavedSession({
+        studentName: student?.name ?? "Student",
+        date,
+        durationMinutes,
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "The session could not be saved. Please try again.",
+      );
+      requestAnimationFrame(() => submitErrorRef.current?.focus());
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (savedSession) {
@@ -138,7 +164,7 @@ export function SessionForm() {
           </div>
           <h1 className="mt-5 text-2xl font-semibold tracking-[-0.025em] text-slate-950">Session logged</h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-            {formatDuration(savedSession.durationMinutes)} with {savedSession.studentName} on {formatFullDate(savedSession.date)} was saved in this browser.
+            {formatDuration(savedSession.durationMinutes)} with {savedSession.studentName} on {formatFullDate(savedSession.date)} was saved to the shared database.
           </p>
           <div className="mt-7 flex flex-col-reverse justify-center gap-3 sm:flex-row">
             <button
@@ -173,6 +199,13 @@ export function SessionForm() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
         <form className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-7" noValidate onSubmit={handleSubmit}>
+          {submitError && (
+            <div ref={submitErrorRef} className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 focus:outline-none" role="alert" tabIndex={-1}>
+              <p className="text-sm font-semibold text-red-900">Session not saved</p>
+              <p className="mt-1 text-sm leading-5 text-red-800">{submitError}</p>
+            </div>
+          )}
+
           {Object.keys(errors).length > 0 && (
             <div ref={errorSummaryRef} className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 focus:outline-none" role="alert" tabIndex={-1}>
               <p className="text-sm font-semibold text-red-900">Please correct the highlighted fields.</p>
@@ -274,7 +307,7 @@ export function SessionForm() {
 
           <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <Link className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700" href="/">Cancel</Link>
-            <button className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700" type="submit">Save session</button>
+            <button className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:bg-teal-500" disabled={isSaving} type="submit">{isSaving ? "Saving…" : "Save session"}</button>
           </div>
         </form>
 
@@ -287,7 +320,7 @@ export function SessionForm() {
           <div className="mt-5 border-t border-slate-100 pt-4">
             <p className="flex gap-2 text-xs leading-5 text-slate-500">
               <svg aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-teal-600" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10v6m0-10h.01" /></svg>
-              Your entry is saved locally and will appear on the dashboard immediately.
+              Your entry is saved to the shared database and will appear on the dashboard immediately.
             </p>
           </div>
         </aside>

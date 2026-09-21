@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { DataLoadError, DataLoading } from "@/components/data-state";
 import { useDemoData } from "@/components/demo-data-provider";
 import {
   aggregateMonthlyReport,
@@ -25,10 +26,19 @@ function SummaryIcon({ type }: { type: "hours" | "sessions" | "students" | "tuto
 }
 
 export function MonthlyReports() {
-  const { data } = useDemoData();
+  const { data, status, loadError, retryLoad } = useDemoData();
   const currentMonth = getMonthKey();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [downloadMessage, setDownloadMessage] = useState("");
+
+  if (status === "loading") {
+    return <DataLoading label="Loading monthly reports…" />;
+  }
+
+  if (status === "error") {
+    return <DataLoadError message={loadError ?? "Could not connect to Supabase."} onRetry={retryLoad} />;
+  }
+
   const reportMonths = getReportMonths(data.sessions, currentMonth);
   const report = aggregateMonthlyReport(data, selectedMonth);
   const hasSessions = report.totals.sessionCount > 0;

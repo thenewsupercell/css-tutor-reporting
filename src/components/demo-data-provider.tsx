@@ -3,47 +3,53 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 
 import {
+  addDemoSession,
+  deleteDemoSession,
   getServerSnapshot,
   getSnapshot,
+  loadDemoData,
   subscribe,
-  updateDemoData,
 } from "@/lib/demo-data-store";
+import type { DataStatus } from "@/lib/demo-data-store";
 import type { DemoData, TutoringSession } from "@/lib/types";
 
 interface DemoDataContextValue {
   data: DemoData;
-  updateData: (updater: (current: DemoData) => DemoData) => void;
-  addSession: (session: TutoringSession) => void;
-  deleteSession: (sessionId: string) => void;
+  status: DataStatus;
+  loadError: string | null;
+  retryLoad: () => void;
+  addSession: (session: TutoringSession) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>;
 }
 
 const DemoDataContext = createContext<DemoDataContextValue | null>(null);
 
 export function DemoDataProvider({ children }: { children: ReactNode }) {
-  const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
+  useEffect(() => {
+    void loadDemoData();
+  }, []);
 
   const value = useMemo(
     () => ({
-      data,
-      updateData: updateDemoData,
-      addSession: (session: TutoringSession) =>
-        updateDemoData((current) => ({
-          ...current,
-          sessions: [session, ...current.sessions],
-        })),
-      deleteSession: (sessionId: string) =>
-        updateDemoData((current) => ({
-          ...current,
-          sessions: current.sessions.filter((session) => session.id !== sessionId),
-        })),
+      ...snapshot,
+      retryLoad: () => void loadDemoData(true),
+      addSession: addDemoSession,
+      deleteSession: deleteDemoSession,
     }),
-    [data],
+    [snapshot],
   );
 
   return (
