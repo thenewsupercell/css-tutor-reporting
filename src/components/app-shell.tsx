@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const navigation = [
   { label: "Dashboard", icon: "home", href: "/", available: true },
-  { label: "Log session", icon: "plus", available: false },
+  { label: "Log session", icon: "plus", href: "/sessions/new", available: true },
   { label: "Students", icon: "people", available: false },
   { label: "Monthly reports", icon: "report", available: false },
 ] as const;
@@ -36,14 +39,22 @@ function Wordmark() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white px-5 py-6 lg:flex lg:flex-col">
         <Wordmark />
         <nav aria-label="Main navigation" className="mt-10 space-y-1.5">
-          {navigation.map((item) =>
-            item.available ? (
-              <Link aria-current="page" className="flex items-center gap-3 rounded-lg bg-teal-50 px-3 py-2.5 text-sm font-semibold text-teal-800" href={item.href} key={item.label}>
+          {navigation.map((item) => {
+            const isCurrent = item.available && pathname === item.href;
+            return item.available ? (
+              <Link
+                aria-current={isCurrent ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${isCurrent ? "bg-teal-50 text-teal-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
+                href={item.href}
+                key={item.label}
+              >
                 <NavIcon name={item.icon} />
                 {item.label}
               </Link>
@@ -53,8 +64,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span>{item.label}</span>
                 <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Soon</span>
               </div>
-            ),
-          )}
+            );
+          })}
         </nav>
         <div className="mt-auto border-t border-slate-200 pt-5">
           <div className="flex items-center gap-3">
@@ -75,9 +86,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="pb-24 lg:ml-64 lg:pb-0">{children}</main>
 
       <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-slate-200 bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-        {navigation.map((item) =>
-          item.available ? (
-            <Link aria-current="page" className="flex flex-col items-center gap-1 text-[11px] font-semibold text-teal-700" href={item.href} key={item.label}>
+        {navigation.map((item) => {
+          const isCurrent = item.available && pathname === item.href;
+          return item.available ? (
+            <Link
+              aria-current={isCurrent ? "page" : undefined}
+              className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${isCurrent ? "text-teal-700" : "text-slate-500"}`}
+              href={item.href}
+              key={item.label}
+            >
               <NavIcon name={item.icon} />
               {item.label}
             </Link>
@@ -86,8 +103,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavIcon name={item.icon} />
               {item.label}
             </div>
-          ),
-        )}
+          );
+        })}
       </nav>
     </div>
   );
