@@ -5,7 +5,7 @@ A small Next.js application for logging tutoring sessions and generating monthly
 ## Supabase setup
 
 1. Create a Supabase project.
-2. In the Supabase SQL Editor, run the files in [`supabase/migrations`](supabase/migrations) in filename order. Existing milestone 4 projects only need to apply the newer goal-status migration.
+2. In the Supabase SQL Editor, run every file in [`supabase/migrations`](supabase/migrations) in filename order. Each file is applied once. Existing projects that already ran the earlier files only need to run migrations added afterward.
 3. Run [`supabase/seed.sql`](supabase/seed.sql) once in the SQL Editor. The inserts are idempotent, so rerunning the file will not duplicate the fictional records.
 4. Copy `.env.example` to `.env.local` and fill in the project URL and publishable key from the project's **Connect** dialog or **Settings → API Keys**:
 
@@ -27,7 +27,9 @@ If you already use the Supabase CLI, the committed migration and default `supaba
 
 ## Demo access assumption
 
-This take-home intentionally has no authentication. The migration disables Row Level Security and grants the anonymous role read access to program data plus insert/delete access to sessions. Use only fictional, non-sensitive data. Before any real deployment, add authentication, enable RLS on every exposed table, and replace these anonymous grants with appropriate policies.
+This take-home intentionally has no authentication. Row Level Security is enabled, with explicit anonymous policies for reading demo data, creating and deleting sessions, and toggling goal completion. Goal updates are additionally limited to the `status` and `completed_at` columns.
+
+Because every visitor uses the same anonymous database role, session creation and deletion cannot be attributed or restricted to an individual tutor, and any visitor can toggle any goal. Use only fictional, non-sensitive data. Production use requires authentication and user-specific authorization policies.
 
 ## Commands
 
