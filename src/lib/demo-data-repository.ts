@@ -1,16 +1,44 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
-import type { DemoData, TutoringSession } from "@/lib/types";
+import type { Database } from "@/lib/supabase/database.types";
+import type { DemoData, Goal, GoalStatus, TutoringSession } from "@/lib/types";
+
+type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type GoalRow = Database["public"]["Tables"]["goals"]["Row"];
 
 export interface DemoDataRepository {
   load(): Promise<DemoData>;
   addSession(session: TutoringSession): Promise<TutoringSession>;
   deleteSession(sessionId: string): Promise<void>;
+  updateGoalStatus(goalId: string, status: GoalStatus): Promise<Goal>;
 }
 
 function repositoryError(action: string, detail?: string) {
   return new Error(
     detail ? `Could not ${action}. ${detail}` : `Could not ${action}.`,
   );
+}
+
+function mapSession(session: SessionRow): TutoringSession {
+  return {
+    id: session.id,
+    assignmentId: session.assignment_id,
+    date: session.session_date,
+    durationMinutes: session.duration_minutes,
+    notes: session.notes ?? undefined,
+    createdAt: session.created_at,
+  };
+}
+
+function mapGoal(goal: GoalRow): Goal {
+  return {
+    id: goal.id,
+    studentId: goal.student_id,
+    title: goal.title,
+    category: goal.category,
+    status: goal.status,
+    createdAt: goal.created_at,
+    completedAt: goal.completed_at,
+  };
 }
 
 export const supabaseRepository: DemoDataRepository = {
@@ -57,23 +85,8 @@ export const supabaseRepository: DemoDataRepository = {
         startDate: assignment.start_date,
         endDate: assignment.end_date,
       })),
-      sessions: (sessionsResult.data ?? []).map((session) => ({
-        id: session.id,
-        assignmentId: session.assignment_id,
-        date: session.session_date,
-        durationMinutes: session.duration_minutes,
-        notes: session.notes ?? undefined,
-        createdAt: session.created_at,
-      })),
-      goals: (goalsResult.data ?? []).map((goal) => ({
-        id: goal.id,
-        studentId: goal.student_id,
-        title: goal.title,
-        category: goal.category,
-        status: goal.status,
-        createdAt: goal.created_at,
-        completedAt: goal.completed_at,
-      })),
+      sessions: (sessionsResult.data ?? []).map(mapSession),
+      goals: (goalsResult.data ?? []).map(mapGoal),
     };
   },
 
@@ -95,14 +108,7 @@ export const supabaseRepository: DemoDataRepository = {
       throw repositoryError("save the session", error?.message);
     }
 
-    return {
-      id: data.id,
-      assignmentId: data.assignment_id,
-      date: data.session_date,
-      durationMinutes: data.duration_minutes,
-      notes: data.notes ?? undefined,
-      createdAt: data.created_at,
-    };
+    return mapSession(data);
   },
 
   async deleteSession(sessionId) {
@@ -114,5 +120,23 @@ export const supabaseRepository: DemoDataRepository = {
     if (error) {
       throw repositoryError("delete the session", error.message);
     }
+  },
+
+  async updateGoalStatus(goalId, status) {
+    const { data, error } = await getSupabaseClient()
+      .from("goals")
+      .update({
+        status,
+        completed_at: status === "completed" ? new Date().toISOString() : null,
+      })
+      .eq("id", goalId)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw repositoryError("update the goal", error?.message);
+    }
+
+    return mapGoal(data);
   },
 };

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 const navigation = [
   { label: "Dashboard", icon: "home", href: "/", available: true },
   { label: "Log session", icon: "plus", href: "/sessions/new", available: true },
-  { label: "Students", icon: "people", available: false },
+  { label: "Students", icon: "people", href: "/students", available: true },
   { label: "Monthly reports", icon: "report", href: "/reports", available: true },
 ] as const;
 

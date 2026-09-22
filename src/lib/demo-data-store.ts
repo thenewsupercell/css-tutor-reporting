@@ -1,5 +1,5 @@
 import { supabaseRepository } from "@/lib/demo-data-repository";
-import type { DemoData, TutoringSession } from "@/lib/types";
+import type { DemoData, GoalStatus, TutoringSession } from "@/lib/types";
 
 export type DataStatus = "loading" | "ready" | "error";
 
@@ -98,6 +98,23 @@ export async function deleteDemoSession(sessionId: string) {
       ...snapshot.data,
       sessions: snapshot.data.sessions.filter(
         (session) => session.id !== sessionId,
+      ),
+    },
+  };
+  emit();
+}
+
+export async function updateDemoGoalStatus(
+  goalId: string,
+  status: GoalStatus,
+) {
+  const updatedGoal = await supabaseRepository.updateGoalStatus(goalId, status);
+  snapshot = {
+    ...snapshot,
+    data: {
+      ...snapshot.data,
+      goals: snapshot.data.goals.map((goal) =>
+        goal.id === goalId ? updatedGoal : goal,
       ),
     },
   };

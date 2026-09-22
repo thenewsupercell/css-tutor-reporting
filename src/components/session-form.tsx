@@ -5,7 +5,8 @@ import { useRef, useState, type FormEvent } from "react";
 
 import { DataLoadError, DataLoading } from "@/components/data-state";
 import { useDemoData } from "@/components/demo-data-provider";
-import { DEMO_TUTOR_ID } from "@/lib/seed-data";
+import { getLocalDateKey } from "@/lib/date-utils";
+import { FIXED_DEMO_TUTOR_ID } from "@/lib/demo-config";
 
 const durationPresets = [
   { label: "30 min", hours: "0.5" },
@@ -26,13 +27,6 @@ interface SavedSession {
   durationMinutes: number;
 }
 
-function localDateKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function formatFullDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "long",
@@ -51,7 +45,7 @@ function formatDuration(minutes: number) {
 
 export function SessionForm() {
   const { data, status, loadError, retryLoad, addSession } = useDemoData();
-  const today = localDateKey();
+  const today = getLocalDateKey();
   const [studentId, setStudentId] = useState("");
   const [date, setDate] = useState(today);
   const [duration, setDuration] = useState("1");
@@ -71,10 +65,10 @@ export function SessionForm() {
     return <DataLoadError message={loadError ?? "Could not connect to Supabase."} onRetry={retryLoad} />;
   }
 
-  const tutor = data.tutors.find((item) => item.id === DEMO_TUTOR_ID);
+  const tutor = data.tutors.find((item) => item.id === FIXED_DEMO_TUTOR_ID);
   const eligibleAssignments = data.assignments.filter(
     (assignment) =>
-      assignment.tutorId === DEMO_TUTOR_ID &&
+      assignment.tutorId === FIXED_DEMO_TUTOR_ID &&
       (!assignment.endDate || assignment.endDate >= today) &&
       data.students.some(
         (student) =>

@@ -5,7 +5,7 @@ A small Next.js application for logging tutoring sessions and generating monthly
 ## Supabase setup
 
 1. Create a Supabase project.
-2. In the Supabase SQL Editor, run [`supabase/migrations/20260921000000_create_tutoring_schema.sql`](supabase/migrations/20260921000000_create_tutoring_schema.sql).
+2. In the Supabase SQL Editor, run the files in [`supabase/migrations`](supabase/migrations) in filename order. Existing milestone 4 projects only need to apply the newer goal-status migration.
 3. Run [`supabase/seed.sql`](supabase/seed.sql) once in the SQL Editor. The inserts are idempotent, so rerunning the file will not duplicate the fictional records.
 4. Copy `.env.example` to `.env.local` and fill in the project URL and publishable key from the project's **Connect** dialog or **Settings → API Keys**:
 

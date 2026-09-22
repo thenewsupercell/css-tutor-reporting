@@ -16,9 +16,10 @@ import {
   getSnapshot,
   loadDemoData,
   subscribe,
+  updateDemoGoalStatus,
 } from "@/lib/demo-data-store";
 import type { DataStatus } from "@/lib/demo-data-store";
-import type { DemoData, TutoringSession } from "@/lib/types";
+import type { DemoData, GoalStatus, TutoringSession } from "@/lib/types";
 
 interface DemoDataContextValue {
   data: DemoData;
@@ -27,6 +28,7 @@ interface DemoDataContextValue {
   retryLoad: () => void;
   addSession: (session: TutoringSession) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  updateGoalStatus: (goalId: string, status: GoalStatus) => Promise<void>;
 }
 
 const DemoDataContext = createContext<DemoDataContextValue | null>(null);
@@ -48,6 +50,7 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
       retryLoad: () => void loadDemoData(true),
       addSession: addDemoSession,
       deleteSession: deleteDemoSession,
+      updateGoalStatus: updateDemoGoalStatus,
     }),
     [snapshot],
   );
