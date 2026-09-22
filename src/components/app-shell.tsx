@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const navigation = [
-  { label: "Dashboard", icon: "home", href: "/", available: true },
-  { label: "Log session", icon: "plus", href: "/sessions/new", available: true },
-  { label: "Students", icon: "people", href: "/students", available: true },
-  { label: "Monthly reports", icon: "report", href: "/reports", available: true },
+  { label: "Dashboard", mobileLabel: "Dashboard", icon: "home", href: "/" },
+  { label: "Log session", mobileLabel: "Log", icon: "plus", href: "/sessions/new" },
+  { label: "Students", mobileLabel: "Students", icon: "people", href: "/students" },
+  { label: "Monthly reports", mobileLabel: "Reports", icon: "report", href: "/reports" },
 ] as const;
 
 function NavIcon({ name }: { name: (typeof navigation)[number]["icon"] }) {
@@ -32,7 +32,7 @@ function Wordmark() {
       <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-teal-700 text-sm font-bold tracking-tight text-white shadow-sm">LV</div>
       <div className="leading-tight">
         <p className="font-semibold tracking-[-0.01em] text-slate-950">LVAEP</p>
-        <p className="mt-0.5 text-xs text-slate-500">Tutoring program</p>
+        <p className="mt-0.5 text-xs text-slate-500">Tutor reporting</p>
       </div>
     </div>
   );
@@ -43,66 +43,54 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
+      <a
+        className="fixed left-4 top-4 z-50 -translate-y-20 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white px-5 py-6 lg:flex lg:flex-col">
         <Wordmark />
         <nav aria-label="Main navigation" className="mt-10 space-y-1.5">
           {navigation.map((item) => {
-            const isCurrent = item.available && pathname === item.href;
-            return item.available ? (
+            const isCurrent = pathname === item.href;
+            return (
               <Link
                 aria-current={isCurrent ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${isCurrent ? "bg-teal-50 text-teal-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${isCurrent ? "bg-teal-50 text-teal-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
                 href={item.href}
                 key={item.label}
               >
                 <NavIcon name={item.icon} />
                 {item.label}
               </Link>
-            ) : (
-              <div aria-disabled="true" className="flex cursor-default items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400" key={item.label}>
-                <NavIcon name={item.icon} />
-                <span>{item.label}</span>
-                <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Soon</span>
-              </div>
             );
           })}
         </nav>
         <div className="mt-auto border-t border-slate-200 pt-5">
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">AM</div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">Alex Morgan</p>
-              <p className="text-xs text-slate-500">Program coordinator</p>
-            </div>
-          </div>
+          <p className="text-xs font-medium text-slate-500">Fictional demo workspace</p>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex h-16 items-center border-b border-slate-200 bg-white/95 px-5 backdrop-blur lg:hidden">
         <Wordmark />
-        <div className="grid size-9 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">AM</div>
       </header>
 
-      <main className="pb-24 lg:ml-64 lg:pb-0">{children}</main>
+      <main className="pb-24 lg:ml-64 lg:pb-0" id="main-content">{children}</main>
 
       <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-slate-200 bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
         {navigation.map((item) => {
-          const isCurrent = item.available && pathname === item.href;
-          return item.available ? (
+          const isCurrent = pathname === item.href;
+          return (
             <Link
               aria-current={isCurrent ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${isCurrent ? "text-teal-700" : "text-slate-500"}`}
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-semibold focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-700 ${isCurrent ? "text-teal-700" : "text-slate-500"}`}
               href={item.href}
               key={item.label}
             >
               <NavIcon name={item.icon} />
-              {item.label}
+              {item.mobileLabel}
             </Link>
-          ) : (
-            <div aria-disabled="true" className="flex flex-col items-center gap-1 text-[11px] font-medium text-slate-400" key={item.label}>
-              <NavIcon name={item.icon} />
-              {item.label}
-            </div>
           );
         })}
       </nav>

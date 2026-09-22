@@ -162,7 +162,7 @@ export function Students() {
           </section>
 
           {selectedStudent && (
-            <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] xl:sticky xl:top-6" aria-labelledby="student-goals-heading">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] xl:sticky xl:top-6" aria-labelledby="student-goals-heading">
               <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -207,7 +207,7 @@ export function Students() {
               ) : (
                 <div className="px-6 py-12 text-center"><p className="text-sm font-medium text-slate-700">No goals recorded</p><p className="mt-1 text-xs text-slate-500">Goals for this student will appear here.</p></div>
               )}
-            </aside>
+            </section>
           )}
         </div>
       ) : (

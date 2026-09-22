@@ -5,11 +5,8 @@ import { useState } from "react";
 
 import { DataLoadError, DataLoading } from "@/components/data-state";
 import { useDemoData } from "@/components/demo-data-provider";
+import { getMonthKey } from "@/lib/report-aggregation";
 import type { TutoringSession } from "@/lib/types";
-
-function monthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
 
 function displayDate(date: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(`${date}T12:00:00`));
@@ -79,7 +76,7 @@ export function Dashboard() {
   }
 
   const now = new Date();
-  const currentMonth = monthKey(now);
+  const currentMonth = getMonthKey(now);
 
   const summary = (() => {
     const sessions = data.sessions.filter((session) => session.date.startsWith(currentMonth)).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
@@ -147,15 +144,11 @@ export function Dashboard() {
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Program dashboard</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">A current view of tutoring activity, student participation, and goals.</p>
         </div>
-        <div className="flex flex-col items-start gap-3 sm:items-end">
+        <div className="flex items-start sm:items-end">
           <Link className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700" href="/sessions/new">
             <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
             Log session
           </Link>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <svg aria-hidden="true" className="size-4 text-teal-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
-            Synced with Supabase
-          </div>
         </div>
       </header>
 
@@ -190,21 +183,21 @@ export function Dashboard() {
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-1">
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-6">
             <div className="flex items-center justify-between"><h2 className="font-semibold text-slate-900">Goal progress</h2><span className="text-sm font-semibold text-teal-700">{progress}%</span></div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-600 transition-[width]" style={{ width: `${progress}%` }} /></div>
+            <div aria-hidden="true" className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-600" style={{ width: `${progress}%` }} /></div>
             <p className="mt-3 text-sm leading-6 text-slate-600">{summary.completedGoals} of {summary.relevantGoals.length} goals for active students have been completed.</p>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-6">
             <h2 className="font-semibold text-slate-900">Tutoring sites</h2>
             <p className="mt-1 text-xs text-slate-500">Activity by location this month</p>
-            <ul className="mt-4 space-y-4">
+            {summary.sites.length ? <ul className="mt-4 space-y-4">
               {summary.sites.map((site) => (
                 <li className="flex items-center justify-between gap-4" key={site.site}>
                   <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-800">{site.site}</p><p className="mt-0.5 text-xs text-slate-500">{site.students} {site.students === 1 ? "student" : "students"}</p></div>
                   <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-800">{displayHours(site.minutes)} hrs</span>
                 </li>
               ))}
-            </ul>
+            </ul> : <p className="mt-4 text-sm text-slate-500">No active tutoring sites.</p>}
           </section>
         </div>
       </div>

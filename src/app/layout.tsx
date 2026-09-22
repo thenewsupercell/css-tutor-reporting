@@ -6,7 +6,10 @@ import { DemoDataProvider } from "@/components/demo-data-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LVAEP Tutor Reporting",
+  title: {
+    default: "Dashboard | LVAEP Tutor Reporting",
+    template: "%s | LVAEP Tutor Reporting",
+  },
   description: "Tutoring activity and monthly reporting for LVAEP.",
 };
 

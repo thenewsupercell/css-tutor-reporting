@@ -4,7 +4,7 @@ export function DataLoading({ label = "Loading program data…" }: { label?: str
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 xl:px-12" role="status">
       <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        <div className="mx-auto size-8 animate-spin rounded-full border-2 border-slate-200 border-t-teal-700" />
+        <div aria-hidden="true" className="mx-auto size-8 animate-spin rounded-full border-2 border-slate-200 border-t-teal-700 motion-reduce:animate-none" />
         <p className="mt-4 text-sm font-medium text-slate-600">{label}</p>
       </div>
     </div>

@@ -69,18 +69,34 @@ export function SessionForm() {
   const eligibleAssignments = data.assignments.filter(
     (assignment) =>
       assignment.tutorId === FIXED_DEMO_TUTOR_ID &&
+      assignment.startDate <= today &&
       (!assignment.endDate || assignment.endDate >= today) &&
       data.students.some(
         (student) =>
           student.id === assignment.studentId && student.status === "active",
       ),
-  );
-  const eligibleStudents = eligibleAssignments
-    .map((assignment) =>
-      data.students.find((student) => student.id === assignment.studentId),
-    )
+  ).sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const eligibleStudents = Array.from(
+    new Map(
+      eligibleAssignments.map((assignment) => {
+        const student = data.students.find(
+          (item) => item.id === assignment.studentId,
+        );
+        return [assignment.studentId, student] as const;
+      }),
+    ).values(),
+  )
     .filter((student) => student !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  function clearFieldError(field: keyof FormErrors) {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -192,7 +208,7 @@ export function SessionForm() {
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <form className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-7" noValidate onSubmit={handleSubmit}>
+        <form aria-busy={isSaving} className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-7" noValidate onSubmit={handleSubmit}>
           {submitError && (
             <div ref={submitErrorRef} className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 focus:outline-none" role="alert" tabIndex={-1}>
               <p className="text-sm font-semibold text-red-900">Session not saved</p>
@@ -202,7 +218,12 @@ export function SessionForm() {
 
           {Object.keys(errors).length > 0 && (
             <div ref={errorSummaryRef} className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 focus:outline-none" role="alert" tabIndex={-1}>
-              <p className="text-sm font-semibold text-red-900">Please correct the highlighted fields.</p>
+              <p className="text-sm font-semibold text-red-900">Please correct the following:</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-red-800">
+                {errors.student && <li><a className="underline underline-offset-2" href="#student">{errors.student}</a></li>}
+                {errors.date && <li><a className="underline underline-offset-2" href="#session-date">{errors.date}</a></li>}
+                {errors.duration && <li><a className="underline underline-offset-2" href="#duration">{errors.duration}</a></li>}
+              </ul>
             </div>
           )}
 
@@ -214,11 +235,14 @@ export function SessionForm() {
               className={`mt-2 w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:ring-2 focus:ring-teal-700/20 ${errors.student ? "border-red-400 focus:border-red-500" : "border-slate-300 focus:border-teal-700"}`}
               id="student"
               name="student"
-              onChange={(event) => setStudentId(event.target.value)}
+              onChange={(event) => {
+                setStudentId(event.target.value);
+                clearFieldError("student");
+              }}
               required
               value={studentId}
             >
-              <option value="">Select a student</option>
+              <option value="">{eligibleStudents.length ? "Select a student" : "No active assigned students"}</option>
               {eligibleStudents.map((student) => <option key={student.id} value={student.id}>{student.name} — {student.tutoringSite}</option>)}
             </select>
             <p className={`mt-1.5 text-xs ${errors.student ? "text-red-700" : "text-slate-500"}`} id={errors.student ? "student-error" : "student-help"}>{errors.student ?? "Only active students currently assigned to you are shown."}</p>
@@ -234,7 +258,10 @@ export function SessionForm() {
                 id="session-date"
                 max={today}
                 name="date"
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => {
+                  setDate(event.target.value);
+                  clearFieldError("date");
+                }}
                 required
                 type="date"
                 value={date}
@@ -254,7 +281,10 @@ export function SessionForm() {
                   max="8"
                   min="0.25"
                   name="duration"
-                  onChange={(event) => setDuration(event.target.value)}
+                  onChange={(event) => {
+                    setDuration(event.target.value);
+                    clearFieldError("duration");
+                  }}
                   required
                   step="0.25"
                   type="number"
@@ -274,7 +304,10 @@ export function SessionForm() {
                   aria-pressed={duration === preset.hours}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${duration === preset.hours ? "border-teal-700 bg-teal-50 text-teal-800" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
                   key={preset.hours}
-                  onClick={() => setDuration(preset.hours)}
+                  onClick={() => {
+                    setDuration(preset.hours);
+                    clearFieldError("duration");
+                  }}
                   type="button"
                 >
                   {preset.label}
@@ -301,7 +334,7 @@ export function SessionForm() {
 
           <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
             <Link className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700" href="/">Cancel</Link>
-            <button className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:bg-teal-500" disabled={isSaving} type="submit">{isSaving ? "Saving…" : "Save session"}</button>
+            <button className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300" disabled={isSaving || eligibleStudents.length === 0} type="submit">{isSaving ? "Saving…" : "Save session"}</button>
           </div>
         </form>
 
